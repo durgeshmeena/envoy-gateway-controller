@@ -23,6 +23,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	egv1a1 "github.com/envoyproxy/gateway/api/v1alpha1"
+	
 )
 
 // BackendTrafficPolicyReconciler reconciles a BackendTrafficPolicy object
