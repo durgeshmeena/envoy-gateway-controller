@@ -60,5 +60,6 @@ func (r *BackendTrafficPolicyReconciler) SetupWithManager(mgr ctrl.Manager) erro
 	return ctrl.NewControllerManagedBy(mgr).
 		// Uncomment the following line adding a pointer to an instance of the controlled resource as an argument
 		// For().
+		For(&egv1a1.BackendTrafficPolicy{}).
 		Complete(r)
 }

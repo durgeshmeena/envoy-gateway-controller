@@ -1,0 +1,29 @@
+{
+    "rateLimitHttpRoute": "http-ratelimit",
+    "rateLimitType": "Global",
+    "rateLimitRules" : [
+        {
+            "clientSelectors": [
+                {
+                    "headers": [
+                        {
+                            "type": "Exact",
+                            "name": "x-client-id",
+                            "value": "client1",
+                            "invert": false 
+                        }
+                    ],
+                    "sourceCIDR": {
+                        "type": "Exact",
+                        "value": "192.168.0.1/32"
+                    }
+
+                }
+            ],
+            "limit": {
+                "requests": 4,
+                "unit": "Minute"
+            }
+        }
+    ]    
+}
