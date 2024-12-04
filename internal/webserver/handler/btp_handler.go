@@ -1,10 +1,7 @@
 package handler
 
 import (
-	"encoding/json"
 	"errors"
-	"fmt"
-	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -77,72 +74,20 @@ func (h *CreateClientBTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	webLog.Info("Received POST request", "time", time.Now())
 
-	// inforce maximum request size of 1MB
-	// A request body larger than that will now result in
-	// Decode() returning a "http: request body too large" error.
-	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
-
-	// disallow unknown fields
-	// this will cause Decode() to return an error if the JSON
-	// contains any keys which do not match the ClientBTP struct.
-	dec := json.NewDecoder(r.Body)
-	dec.DisallowUnknownFields()
-
 	// create a new ClientBTP struct and decode the request body into it
 	var clientBTPData ClientBTP
-	err := dec.Decode(&clientBTPData)
+
+	// validate the request body
+	err := validation.DecodeJSONBody(w, r, &clientBTPData, webLog)
 	if err != nil {
-		// webLog.Error(err, "Failed to decode request body")
-		// http.Error(w, err.Error(), http.StatusBadRequest)
 
-		var syntaxError *json.SyntaxError
-		var unmarshalTypeError *json.UnmarshalTypeError
-
-		// switch on the type of the error to extract the
-		// underlying cause. We can then return a more specific error message
-		switch {
-		// Catch any syntax errors in the JSON and return a client error response
-		case errors.As(err, &syntaxError):
-			msg := fmt.Sprintf("Request body contains badly-formed JSON (at position %d)", syntaxError.Offset)
-			webLog.Error(err, msg)
-			http.Error(w, msg, http.StatusBadRequest)
-
-		// check if there is any io.ErrUnexpectedEOF error while decoding json
-		case errors.Is(err, io.ErrUnexpectedEOF):
-			msg := "Request body contains badly-formed JSON"
-			webLog.Error(err, msg)
-			http.Error(w, msg, http.StatusBadRequest)
-
-		// Catch any type errors,
-		case errors.As(err, &unmarshalTypeError):
-			msg := fmt.Sprintf("Request body contains an invalid value for the %q field (at position %d)", unmarshalTypeError.Field, unmarshalTypeError.Offset)
-			webLog.Error(err, msg)
-			http.Error(w, msg, http.StatusBadRequest)
-
-		// Catch the error caused by extra unexpected fields in the request body
-		// case strings.HasPrefix(err.Error(), "json: unknown field "):
-		// 	fieldName := strings.TrimPrefix(err.Error(), "json: unknown field ")
-		// 	msg := fmt.Sprintf("Request body contains unknown field %s", fieldName)
-		// 	webLog.Error(err, msg)
-		// 	http.Error(w, msg, http.StatusBadRequest)
-
-		// if request body is empty
-		case errors.Is(err, io.EOF):
-			msg := "Request body must not be empty"
-			webLog.Error(err, msg)
-			http.Error(w, msg, http.StatusBadRequest)
-
-		// return request body too large error, if request body is larger than 1MB
-		case err.Error() == "http: request body too large":
-			msg := "Request body must not be larger than 1MB"
-			webLog.Error(err, msg)
-			http.Error(w, msg, http.StatusRequestEntityTooLarge)
-
-		// default return Internal Server Error (500)
-		default:
+		var mr *validation.MalformedRequest
+		if errors.As(err, &mr) {
 			webLog.Error(err, "Failed to decode request body")
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-
+			http.Error(w, mr.Error(), mr.Status)
+		} else {
+			webLog.Error(err, "Internal Server Error")
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 		return
 	}
