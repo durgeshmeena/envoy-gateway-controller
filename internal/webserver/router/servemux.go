@@ -47,6 +47,8 @@ func GetRouters(webLog logr.Logger) *http.ServeMux {
 		}
 		// fmt.Fprintf(w, "User: %s", user.User)
 		webLog.Info("User", "user", user.User)
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(user.User))
 	})
 
 	// mux.HandleFunc("POST /btp/create", handler.CreateClientBTP)
