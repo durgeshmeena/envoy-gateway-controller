@@ -9,18 +9,37 @@ import (
 	"sigs.k8s.io/yaml"
 
 	egv1a1 "github.com/envoyproxy/gateway/api/v1alpha1"
+	gwapiv1a2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	"github.com/go-logr/logr"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 
 	"github.com/durgeshmeena/envoy-gateway-controller/internal/pkg/validation"
 )
-
+// ClientBTP struct, to validate the BTP data received from the client
 type ClientBTP struct {
 	// ClientBTP is the struct for the client BTP, which is used to
 	// store the BTP data received from the client.
+	Namespace 	   string                 `json:"namespace"`
 	RateLimitHttpRoute string                 `json:"rateLimitHttpRoute"`
-	RateLimitType      egv1a1.RateLimitType   `json:"rateLimitType"`
+	// RateLimitType      egv1a1.RateLimitType   `json:"rateLimitType"`
 	RateLimitRules     []egv1a1.RateLimitRule `json:"rateLimitRules"`
+}
+
+// metadata 
+type Metadata struct {
+	Name 	string `json:"name"`
+	Namespace string `json:"namespace"`
+	RateLimitHttpRoute string `json:"rateLimitHttpRoute"`
+}
+
+// BTP struct, which will be stored in the json file
+type BTP struct {
+	// metadata
+	Metadata Metadata `json:"metadata"`
+	// btp spec
+	BTPSpec egv1a1.BackendTrafficPolicySpec `json:"btpSpec"`
+	// status
+	Status gwapiv1a2.PolicyStatus `json:"status"`
 }
 
 type CreateClientBTPHandler struct {
@@ -28,16 +47,23 @@ type CreateClientBTPHandler struct {
 	Logger *logr.Logger
 }
 
-// validate RateLimitType, enum with values: Global or Local
-func validateRateLimitType(rateLimitType string) error {
-	if rateLimitType != "Global" && rateLimitType != "Local" {
-		return errors.New("rateLimitType is not valid, rateLimitType must be either Global or Local")
-	}
-	return nil
-}
+// // validate RateLimitType, enum with values: Global or Local
+// func validateRateLimitType(rateLimitType string) error {
+// 	if rateLimitType != "Global" && rateLimitType != "Local" {
+// 		return errors.New("rateLimitType is not valid, rateLimitType must be either Global or Local")
+// 	}
+// 	return nil
+// }
 
 func validateClientBTP(clientBTPData *ClientBTP, webLogger logr.Logger) error {
 	var errs []error
+	// validate if Namespace is not empty
+	if clientBTPData.Namespace == "" {
+		validationError := errors.New("namespace is empty, namespace is required")
+		errs = append(errs, validationError)
+		webLogger.Error(validationError, "Namespace")
+	}
+
 	// validate if RateLimitHttpRoute is not empty
 	if clientBTPData.RateLimitHttpRoute == "" {
 		validationError := errors.New("rateLimitHttpRoute is empty, rateLimitHttpRoute is required")
@@ -45,10 +71,10 @@ func validateClientBTP(clientBTPData *ClientBTP, webLogger logr.Logger) error {
 		webLogger.Error(validationError, "RateLimitHttpRoute")
 	}
 	// validate RateLimitType
-	if err := validateRateLimitType(string(clientBTPData.RateLimitType)); err != nil {
-		errs = append(errs, err)
-		webLogger.Error(err, "RateLimitType")
-	}
+	// if err := validateRateLimitType(string(clientBTPData.RateLimitType)); err != nil {
+	// 	errs = append(errs, err)
+	// 	webLogger.Error(err, "RateLimitType")
+	// }
 	// validate RateLimitRules is not empty
 	if len(clientBTPData.RateLimitRules) == 0 {
 		validationError := errors.New("rateLimitRules is empty, rateLimitRules is required")
@@ -101,19 +127,77 @@ func (h *CreateClientBTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	// convert the ClientBTP struct to YAML
-	clientBTPYamlData, err := yaml.Marshal(clientBTPData)
+	// clientBTPYamlData, err := yaml.Marshal(clientBTPData)
+	// if err != nil {
+	// 	webLog.Error(err, "Failed to marshal ClientBTP data to YAML")
+	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	return
+	// }
+
+	// // log the ClientBTP data
+	// webLog.Info("ClientBTP data", "data", string(clientBTPYamlData))
+
+	// // send yaml response
+	// w.Header().Set("Content-Type", "application/x-yaml")
+	// w.WriteHeader(http.StatusOK)
+	// w.Write(clientBTPYamlData)
+
+	// create a new BTP struct
+	// distinct name, combination of httproute, time
+	name := "btp-" + clientBTPData.RateLimitHttpRoute + "-" + strconv.FormatInt(time.Now().Unix(), 10)
+	// create metadata
+	metaData := Metadata{
+		Name: name,
+		Namespace: clientBTPData.Namespace,
+		RateLimitHttpRoute: clientBTPData.RateLimitHttpRoute,
+	}
+
+	// create targetRefs for BTP using the httpRoute
+	var targetRefs []gwapiv1a2.LocalPolicyTargetReferenceWithSectionName
+	targetRefs = append(targetRefs, gwapiv1a2.LocalPolicyTargetReferenceWithSectionName{
+			LocalPolicyTargetReference: gwapiv1a2.LocalPolicyTargetReference{
+				Group: "gateway.networking.k8s.io",
+				Kind: "HTTPRoute",	
+				Name: gwapiv1a2.ObjectName(clientBTPData.RateLimitHttpRoute),
+			},
+	})
+
+	// ratelimit spec with global ratelimit
+	rateLimitSpec := egv1a1.RateLimitSpec{
+		Type: "Global",
+		Global: &egv1a1.GlobalRateLimit{
+			Rules: clientBTPData.RateLimitRules,
+		},
+	}
+ 
+	// create BTP spec
+	btpSpec := egv1a1.BackendTrafficPolicySpec{
+		// reference to  httproute
+		PolicyTargetReferences: egv1a1.PolicyTargetReferences{
+			TargetRefs: targetRefs,
+		},
+		// ratelimit spec
+		RateLimit: &rateLimitSpec,
+	}
+
+	// blank policy status
+	status := gwapiv1a2.PolicyStatus{}
+
+	// final BTP 
+	btp := BTP{
+		Metadata: metaData,
+		BTPSpec: btpSpec,
+		Status: status,
+	}
+
+	btpYaml, err := yaml.Marshal(btp)
 	if err != nil {
-		webLog.Error(err, "Failed to marshal ClientBTP data to YAML")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		webLog.Error(err, "Failed to marshal BTP data to YAML")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	// log the ClientBTP data
-	webLog.Info("ClientBTP data", "data", string(clientBTPYamlData))
-
-	// send yaml response
-	w.Header().Set("Content-Type", "application/x-yaml")
+	// send the respopnse back
 	w.WriteHeader(http.StatusOK)
-	w.Write(clientBTPYamlData)
-
+	w.Write(btpYaml)
 }
