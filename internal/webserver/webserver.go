@@ -1,23 +1,18 @@
-// package webserver
-
-package main
+package webserver
 
 import (
 	"net/http"
 	"time"
 
-	"github.com/go-logr/logr"
-	
 	"github.com/durgeshmeena/envoy-gateway-controller/internal/pkg/logging"
 	"github.com/durgeshmeena/envoy-gateway-controller/internal/webserver/middleware"
 	"github.com/durgeshmeena/envoy-gateway-controller/internal/webserver/router"
 )
 
-// var (
-// 	webLog = logging.NewLoggerWithName("WebServer")
-// )
+// StartServer starts the web server
+func StartServer() error {
+	webLog := logging.Log.WithName("WebServer")
 
-func startServer(webLog logr.Logger) error {
 	handlers := router.GetRouters(webLog)
 
 	loggedMiddleware := middleware.LoggingMiddleware(webLog)
@@ -32,6 +27,9 @@ func startServer(webLog logr.Logger) error {
 		IdleTimeout:       120 * time.Second,
 	}
 
+	// print log about starting server
+	webLog.Info("Starting Web Server", "port", 3000, "time", time.Now())
+
 	// Listen and Server Web Server
 	func() {
 		if err := server.ListenAndServe(); err != nil {
@@ -43,13 +41,13 @@ func startServer(webLog logr.Logger) error {
 	return nil
 }
 
-func main() {
-	// logging.InitLogger()
-	webLog := logging.InitLogger().WithName("WebServer")
-	// log.Println("Starting Web Server")
-	webLog.Info("Starting Web Server", "time", time.Now())
-	if err := startServer(webLog); err != nil {
-		// log.Println("Failed to start server")
-		webLog.Error(err, "Failed to start server")
-	}
-}
+// func main() {
+// 	// logging.InitLogger()
+// 	webLog := logging.InitLogger().WithName("WebServer")
+// 	// log.Println("Starting Web Server")
+// 	webLog.Info("Starting Web Server", "time", time.Now())
+// 	if err := StartServer(webLog); err != nil {
+// 		// log.Println("Failed to start server")
+// 		webLog.Error(err, "Failed to start server")
+// 	}
+// }

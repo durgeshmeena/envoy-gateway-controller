@@ -36,13 +36,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	"github.com/durgeshmeena/envoy-gateway-controller/internal/controller"
+	"github.com/durgeshmeena/envoy-gateway-controller/internal/pkg/logging"
+	"github.com/durgeshmeena/envoy-gateway-controller/internal/webserver"
 	egv1a1 "github.com/envoyproxy/gateway/api/v1alpha1"
+	"github.com/go-logr/logr"
 	// +kubebuilder:scaffold:imports
 )
 
 var (
-	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
+	scheme = runtime.NewScheme()
+	// setupLog = ctrl.Log.WithName("setup")
+	setupLog logr.Logger
 )
 
 func init() {
@@ -75,14 +79,17 @@ func main() {
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+	// ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+
+	// initialize global logger
+	logging.InitLogger(&opts)
+
+	setupLog = logging.Log.WithName("setup")
 
 	// call webserver
-	// webLog := logging.InitLogger().WithName("WebServer")
-	// webLog.Info("Starting Web Server", "port", 3000, "time", time.Now())
-	// if err := webserver.StartServer(webLog); err != nil {
-	// 	webLog.Error(err, "Failed to start server")
-	// }
+	if err := webserver.StartServer(); err != nil {
+		setupLog.Error(err, "Failed to start server")
+	}
 
 	// continue controller code
 
