@@ -79,19 +79,12 @@ func main() {
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
-	// ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+	// ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts))) // default logger initialization
 
-	// initialize global logger
+	// initialize global logger, and initialize setupLog from global logger
 	logging.InitLogger(&opts)
-
 	setupLog = logging.Log.WithName("setup")
-
-	// call webserver
-	if err := webserver.StartServer(); err != nil {
-		setupLog.Error(err, "Failed to start server")
-	}
-
-	// continue controller code
+	// logging initialization- done
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
 	// due to its vulnerabilities. More specifically, disabling http/2 will
@@ -159,6 +152,13 @@ func main() {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
+
+	// Add webserver to the manager
+	if err := mgr.Add(&webserver.WebServer{}); err != nil {
+		setupLog.Error(err, "unable to add web server to manager")
+		os.Exit(1)
+	}
+	// adding weserver to the manager - done 
 
 	if err = (&controller.BackendTrafficPolicyReconciler{
 		Client: mgr.GetClient(),
