@@ -36,6 +36,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	"github.com/durgeshmeena/envoy-gateway-controller/internal/controller"
+	egv1a1 "github.com/envoyproxy/gateway/api/v1alpha1"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -46,6 +47,7 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(egv1a1.AddToScheme(scheme))
 
 	// +kubebuilder:scaffold:scheme
 }
@@ -74,6 +76,15 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+
+	// call webserver
+	// webLog := logging.InitLogger().WithName("WebServer")
+	// webLog.Info("Starting Web Server", "port", 3000, "time", time.Now())
+	// if err := webserver.StartServer(webLog); err != nil {
+	// 	webLog.Error(err, "Failed to start server")
+	// }
+
+	// continue controller code
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
 	// due to its vulnerabilities. More specifically, disabling http/2 will
