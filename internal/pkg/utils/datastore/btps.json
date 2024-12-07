@@ -1,0 +1,338 @@
+[
+    {
+        "metadata": {
+            "name": "btp-http-ratelimit-1733532627",
+            "namespace": "test",
+            "rateLimitHttpRoute": "http-ratelimit"
+        },
+        "btpSpec": {
+            "targetRefs": [
+                {
+                    "group": "gateway.networking.k8s.io",
+                    "kind": "HTTPRoute",
+                    "name": "http-ratelimit"
+                }
+            ],
+            "rateLimit": {
+                "type": "Global",
+                "global": {
+                    "rules": [
+                        {
+                            "clientSelectors": [
+                                {
+                                    "headers": [
+                                        {
+                                            "type": "Exact",
+                                            "name": "x-client-id",
+                                            "value": "client1",
+                                            "invert": false
+                                        }
+                                    ],
+                                    "sourceCIDR": {
+                                        "type": "Exact",
+                                        "value": "192.168.0.1/32"
+                                    }
+                                }
+                            ],
+                            "limit": {
+                                "requests": 4,
+                                "unit": "Minute"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "status": {
+            "ancestors": null
+        }
+    },
+    {
+        "metadata": {
+            "name": "btp-http-ratelimit-1733532679",
+            "namespace": "poc",
+            "rateLimitHttpRoute": "http-ratelimit"
+        },
+        "btpSpec": {
+            "targetRefs": [
+                {
+                    "group": "gateway.networking.k8s.io",
+                    "kind": "HTTPRoute",
+                    "name": "http-ratelimit"
+                }
+            ],
+            "rateLimit": {
+                "type": "Global",
+                "global": {
+                    "rules": [
+                        {
+                            "clientSelectors": [
+                                {
+                                    "headers": [
+                                        {
+                                            "type": "Exact",
+                                            "name": "x-client-id",
+                                            "value": "client1",
+                                            "invert": false
+                                        }
+                                    ],
+                                    "sourceCIDR": {
+                                        "type": "Exact",
+                                        "value": "192.168.0.1/32"
+                                    }
+                                }
+                            ],
+                            "limit": {
+                                "requests": 4,
+                                "unit": "Minute"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "status": {
+            "ancestors": null
+        }
+    },
+    {
+        "metadata": {
+            "name": "btp-http-ratelimit-1733533394",
+            "namespace": "poc",
+            "rateLimitHttpRoute": "http-ratelimit"
+        },
+        "btpSpec": {
+            "targetRefs": [
+                {
+                    "group": "gateway.networking.k8s.io",
+                    "kind": "HTTPRoute",
+                    "name": "http-ratelimit"
+                }
+            ],
+            "rateLimit": {
+                "type": "Global",
+                "global": {
+                    "rules": [
+                        {
+                            "clientSelectors": [
+                                {
+                                    "headers": [
+                                        {
+                                            "type": "Exact",
+                                            "name": "x-client-id",
+                                            "value": "client1",
+                                            "invert": false
+                                        }
+                                    ],
+                                    "sourceCIDR": {
+                                        "type": "Exact",
+                                        "value": "192.168.0.1/32"
+                                    }
+                                }
+                            ],
+                            "limit": {
+                                "requests": 4,
+                                "unit": "Minute"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "status": {
+            "ancestors": null
+        }
+    },
+    {
+        "metadata": {
+            "name": "btp-http-ratelimit-1733533443",
+            "namespace": "poc",
+            "rateLimitHttpRoute": "http-ratelimit"
+        },
+        "btpSpec": {
+            "targetRefs": [
+                {
+                    "group": "gateway.networking.k8s.io",
+                    "kind": "HTTPRoute",
+                    "name": "http-ratelimit"
+                }
+            ],
+            "rateLimit": {
+                "type": "Global",
+                "global": {
+                    "rules": [
+                        {
+                            "clientSelectors": [
+                                {
+                                    "headers": [
+                                        {
+                                            "type": "Exact",
+                                            "name": "x-client-id",
+                                            "value": "client1",
+                                            "invert": false
+                                        }
+                                    ],
+                                    "sourceCIDR": {
+                                        "type": "Exact",
+                                        "value": "192.168.0.1/32"
+                                    }
+                                }
+                            ],
+                            "limit": {
+                                "requests": 4,
+                                "unit": "Minute"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "status": {
+            "ancestors": null
+        }
+    },
+    {
+        "metadata": {
+            "name": "btp-http-ratelimit-1733535864",
+            "namespace": "poc",
+            "rateLimitHttpRoute": "http-ratelimit"
+        },
+        "btpSpec": {
+            "targetRefs": [
+                {
+                    "group": "gateway.networking.k8s.io",
+                    "kind": "HTTPRoute",
+                    "name": "http-ratelimit"
+                }
+            ],
+            "rateLimit": {
+                "type": "Global",
+                "global": {
+                    "rules": [
+                        {
+                            "clientSelectors": [
+                                {
+                                    "headers": [
+                                        {
+                                            "type": "Exact",
+                                            "name": "x-client-id",
+                                            "value": "client1",
+                                            "invert": false
+                                        }
+                                    ],
+                                    "sourceCIDR": {
+                                        "type": "Exact",
+                                        "value": "192.168.0.1/32"
+                                    }
+                                }
+                            ],
+                            "limit": {
+                                "requests": 4,
+                                "unit": "Minute"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "status": {
+            "ancestors": null
+        }
+    },
+    {
+        "metadata": {
+            "name": "btp-http-ratelimit-1733536271",
+            "namespace": "poc",
+            "rateLimitHttpRoute": "http-ratelimit"
+        },
+        "btpSpec": {
+            "targetRefs": [
+                {
+                    "group": "gateway.networking.k8s.io",
+                    "kind": "HTTPRoute",
+                    "name": "http-ratelimit"
+                }
+            ],
+            "rateLimit": {
+                "type": "Global",
+                "global": {
+                    "rules": [
+                        {
+                            "clientSelectors": [
+                                {
+                                    "headers": [
+                                        {
+                                            "type": "Exact",
+                                            "name": "x-client-id",
+                                            "value": "client1",
+                                            "invert": false
+                                        }
+                                    ],
+                                    "sourceCIDR": {
+                                        "type": "Exact",
+                                        "value": "192.168.0.1/32"
+                                    }
+                                }
+                            ],
+                            "limit": {
+                                "requests": 4,
+                                "unit": "Minute"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "status": {
+            "ancestors": null
+        }
+    },
+    {
+        "metadata": {
+            "name": "btp-http-ratelimit-1733536568",
+            "namespace": "poc",
+            "rateLimitHttpRoute": "http-ratelimit"
+        },
+        "btpSpec": {
+            "targetRefs": [
+                {
+                    "group": "gateway.networking.k8s.io",
+                    "kind": "HTTPRoute",
+                    "name": "http-ratelimit"
+                }
+            ],
+            "rateLimit": {
+                "type": "Global",
+                "global": {
+                    "rules": [
+                        {
+                            "clientSelectors": [
+                                {
+                                    "headers": [
+                                        {
+                                            "type": "Exact",
+                                            "name": "x-client-id",
+                                            "value": "client1",
+                                            "invert": false
+                                        }
+                                    ],
+                                    "sourceCIDR": {
+                                        "type": "Exact",
+                                        "value": "192.168.0.1/32"
+                                    }
+                                }
+                            ],
+                            "limit": {
+                                "requests": 4,
+                                "unit": "Minute"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "status": {
+            "ancestors": null
+        }
+    }
+]

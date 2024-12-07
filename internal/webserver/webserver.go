@@ -1,55 +1,72 @@
-// package webserver
-
-package main
+package webserver
 
 import (
+	"context"
+	"errors"
 	"net/http"
 	"time"
 
-	"github.com/go-logr/logr"
-	
+	"sigs.k8s.io/controller-runtime/pkg/manager"
+
 	"github.com/durgeshmeena/envoy-gateway-controller/internal/pkg/logging"
 	"github.com/durgeshmeena/envoy-gateway-controller/internal/webserver/middleware"
 	"github.com/durgeshmeena/envoy-gateway-controller/internal/webserver/router"
 )
 
-// var (
-// 	webLog = logging.NewLoggerWithName("WebServer")
-// )
+// implement Runnable interface, so that it can be aaded into the controller
+type WebServer struct{}
 
-func startServer(webLog logr.Logger) error {
+// Start implements the Runnable interface
+func (w *WebServer) Start(ctx context.Context) error {
+	return StartServer(ctx)
+}
+
+// verify that WebServer implements the Runnable interface
+var _ manager.Runnable = &WebServer{}
+
+// StartServer starts the web server
+func StartServer(ctx context.Context) error {
+	webLog := logging.Log.WithName("WebServer")
+
 	handlers := router.GetRouters(webLog)
-
 	loggedMiddleware := middleware.LoggingMiddleware(webLog)
 	loggedHandlers := loggedMiddleware(handlers)
 
 	server := &http.Server{
 		Addr:              ":3000",
 		Handler:           loggedHandlers,
-		ReadTimeout:       10 * time.Second,
+		ReadTimeout:       5 * time.Second,
 		ReadHeaderTimeout: 10 * time.Second,
 		WriteTimeout:      20 * time.Second,
 		IdleTimeout:       120 * time.Second,
 	}
 
-	// Listen and Server Web Server
-	func() {
-		if err := server.ListenAndServe(); err != nil {
-			// log.Fatalf("Failed to start server: %v", err)
+	// start the server in a goroutine
+	errChan := make(chan error, 1)
+	go func() {
+		webLog.Info("Starting Web Server", "port", 3000)
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			webLog.Error(err, "Failed to start server")
+			errChan <- err
 		}
+        // If the error is http.ErrServerClosed, it's expected; do not log as error
 	}()
 
-	return nil
-}
+	// Wait for the context to be done
+	select {
+	case <-ctx.Done():
+		webLog.Info("Shutting down Web Server")
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			webLog.Error(err, "Web server forced to shutdown")
+			return err
+		}
+		webLog.Info("Web server stopped gracefully")
+		return nil
 
-func main() {
-	// logging.InitLogger()
-	webLog := logging.InitLogger().WithName("WebServer")
-	// log.Println("Starting Web Server")
-	webLog.Info("Starting Web Server", "time", time.Now())
-	if err := startServer(webLog); err != nil {
-		// log.Println("Failed to start server")
-		webLog.Error(err, "Failed to start server")
+	case err := <-errChan:
+		webLog.Error(err, "Web server encountered an error")
+		return err
 	}
 }

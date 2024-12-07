@@ -36,16 +36,22 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	"github.com/durgeshmeena/envoy-gateway-controller/internal/controller"
+	"github.com/durgeshmeena/envoy-gateway-controller/internal/pkg/logging"
+	"github.com/durgeshmeena/envoy-gateway-controller/internal/webserver"
+	egv1a1 "github.com/envoyproxy/gateway/api/v1alpha1"
+	"github.com/go-logr/logr"
 	// +kubebuilder:scaffold:imports
 )
 
 var (
-	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
+	scheme = runtime.NewScheme()
+	// setupLog = ctrl.Log.WithName("setup")
+	setupLog logr.Logger
 )
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(egv1a1.AddToScheme(scheme))
 
 	// +kubebuilder:scaffold:scheme
 }
@@ -73,7 +79,12 @@ func main() {
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+	// ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts))) // default logger initialization
+
+	// initialize global logger, and initialize setupLog from global logger
+	logging.InitLogger(&opts)
+	setupLog = logging.Log.WithName("setup")
+	// logging initialization- done
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
 	// due to its vulnerabilities. More specifically, disabling http/2 will
@@ -141,6 +152,13 @@ func main() {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
+
+	// Add webserver to the manager
+	if err := mgr.Add(&webserver.WebServer{}); err != nil {
+		setupLog.Error(err, "unable to add web server to manager")
+		os.Exit(1)
+	}
+	// adding weserver to the manager - done 
 
 	if err = (&controller.BackendTrafficPolicyReconciler{
 		Client: mgr.GetClient(),
