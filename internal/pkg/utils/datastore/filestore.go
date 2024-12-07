@@ -24,8 +24,37 @@ func NewFileStore(logger logr.Logger) *FileStore {
 	}
 }
 
+func (fs *FileStore) GetDataStoreFilePath() (string, error) {
+	// get path of the file
+
+	fs.dataStoreLogger.Info("Getting dataStore json file path")
+
+	cmd, err := os.Getwd()
+	if err != nil {
+		fs.dataStoreLogger.Error(err, "Error getting current working directory")
+	}
+	fileName := "btps.json"
+	fileDir := "internal/pkg/utils/datastore"
+	filePath := filepath.Join(cmd, fileDir, fileName)
+	fs.dataStoreLogger.Info("Store File path: ", "path", filePath)
+
+	// check if file exists, if not create it
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		fs.dataStoreLogger.Info("File does not exist, creating file")
+		file, err := os.Create(filePath)
+		if err != nil {
+			fs.dataStoreLogger.Error(err, "Error creating file")
+			return "", err
+		}
+		file.Close()
+	}
+
+	return filePath, nil
+
+}
+
 // read existing BTPs from file
-func (fs *FileStore) readBTPsFromFile(filePath string) ([]model.BTP, error) {
+func (fs *FileStore) ReadBTPsFromFile(filePath string) ([]model.BTP, error) {
 	var btps []model.BTP
 
 	// read file content
@@ -51,30 +80,17 @@ func (fs *FileStore) readBTPsFromFile(filePath string) ([]model.BTP, error) {
 
 // save BTP to file with validation
 func (fs *FileStore) SaveBTPToFile(btp model.BTP) error {
-	// get path of the file
-	cmd, err := os.Getwd()
-	if err != nil {
-		fs.dataStoreLogger.Error(err, "Error getting current working directory")
-	}
-	fileName := "btps.json"
-	fileDir := "internal/pkg/utils/datastore"
-	filePath := filepath.Join(cmd, fileDir, fileName)
-	fs.dataStoreLogger.Info("Store File path: ", "path", filePath)
 
-	// check if file exists, if not create it
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		fs.dataStoreLogger.Info("File does not exist, creating file")
-		file, err := os.Create(filePath)
-		if err != nil {
-			fs.dataStoreLogger.Error(err, "Error creating file")
-			return err
-		}
-		file.Close()
+	// get path of the file
+	filePath, err := fs.GetDataStoreFilePath()
+	if err != nil {
+		fs.dataStoreLogger.Error(err, "Error getting dataStore json file path")
+		return err
 	}
 
 	fs.dataStoreLogger.Info("Reading data from file")
 	//  read existing BTPs from file
-	btps, err := fs.readBTPsFromFile(filePath)
+	btps, err := fs.ReadBTPsFromFile(filePath)
 	if err != nil {
 		fs.dataStoreLogger.Error(err, "Error reading BTPs from file")
 		return err
