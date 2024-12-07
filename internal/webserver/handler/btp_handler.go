@@ -20,7 +20,16 @@ import (
 
 type CreateClientBTPHandler struct {
 	// logger
-	Logger *logr.Logger
+	Logger 		*logr.Logger
+	// datastore
+	FileStore 	*datastore.FileStore
+}
+
+func NewCreateClientBTPHandler(logger *logr.Logger, fileStore *datastore.FileStore) *CreateClientBTPHandler {
+	return &CreateClientBTPHandler{
+		Logger: logger,
+		FileStore: fileStore,
+	}
 }
 
 // // validate RateLimitType, enum with values: Global or Local
@@ -157,7 +166,7 @@ func (h *CreateClientBTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	// save BTP to file
-	if err := datastore.SaveBTPToFile(btp); err != nil {
+	if err := h.FileStore.SaveBTPToFile(btp); err != nil {
 		webLog.Error(err, "Failed to save BTP to file")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return

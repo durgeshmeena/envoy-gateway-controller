@@ -6,18 +6,14 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/durgeshmeena/envoy-gateway-controller/internal/pkg/utils/datastore"
 	"github.com/durgeshmeena/envoy-gateway-controller/internal/webserver/handler"
 	"github.com/go-logr/logr"
 )
 
-
-
 type User struct {
 	User string `json:"user"`
-
 }
-
-
 
 func GetRouters(webLog logr.Logger) *http.ServeMux {
 	mux := http.NewServeMux()
@@ -51,9 +47,10 @@ func GetRouters(webLog logr.Logger) *http.ServeMux {
 		w.Write([]byte(user.User))
 	})
 
-	// mux.HandleFunc("POST /btp/create", handler.CreateClientBTP)
-	mux.Handle("POST /btp/create", &handler.CreateClientBTPHandler{Logger: &webLog})
-
+	// handle create btp
+	fileStore := datastore.NewFileStore(webLog.WithName("FileStore"))
+	btpHandler := handler.NewCreateClientBTPHandler(&webLog, fileStore)
+	mux.Handle("POST /btp/create", btpHandler)
 
 	return mux
 }
