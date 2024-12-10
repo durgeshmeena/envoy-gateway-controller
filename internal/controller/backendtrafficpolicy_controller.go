@@ -67,14 +67,14 @@ func (r *BackendTrafficPolicyReconciler) Reconcile(ctx context.Context, req ctrl
 		log.Info("NamespacedName is empty, maybe reconcile loop triggered manually using event from webserver")
 		log.Info("Refreshing/Creating BTP instances")
 
-		err := r.refreshOrCreateBackendTrafficPolicies(ctx)
-		if err != nil {
-			log.Error(err, "Failed to refresh or create BackendTrafficPolicies")
-			return ctrl.Result{}, err
-		}
+		// err := r.refreshOrCreateBackendTrafficPolicies(ctx)
+		// if err != nil {
+		// 	log.Error(err, "Failed to refresh or create BackendTrafficPolicies")
+		// 	return ctrl.Result{}, err
+		// }
 
 		// return empty result
-		return ctrl.Result{}, nil
+		// return ctrl.Result{}, nil
 	}
 
 	// read BTP instance from btps.json file and, fetch each corresponding instance from controller-runtime
@@ -200,11 +200,16 @@ func (r *BackendTrafficPolicyReconciler) Reconcile(ctx context.Context, req ctrl
 }
 
 // refreshOrCreateBackendTrafficPolicies refreshes or creates the BackendTrafficPolicy instances
-func (r *BackendTrafficPolicyReconciler) refreshOrCreateBackendTrafficPolicies(ctx context.Context) error {
-	// TODO: implement the logic to refresh or create the BackendTrafficPolicy instances
+// func (r *BackendTrafficPolicyReconciler) refreshOrCreateBackendTrafficPolicies(ctx context.Context) error {
+// 	// TODO: implement the logic to refresh or create the BackendTrafficPolicy instances
 
-	return nil
-}
+// 	return nil
+// }
+
+// core reconcile logic
+// func (r *BackendTrafficPolicyReconciler) coreReconcile(namespacedName types.NamespacedName, log logr.Logger, ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+// 	return ctrl.Result{}, nil
+// }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *BackendTrafficPolicyReconciler) SetupWithManager(mgr ctrl.Manager) error {
