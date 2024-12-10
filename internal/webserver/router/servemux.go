@@ -6,9 +6,13 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/durgeshmeena/envoy-gateway-controller/internal/pkg/kubernetes/btpevent"
 	"github.com/durgeshmeena/envoy-gateway-controller/internal/pkg/utils/datastore"
 	"github.com/durgeshmeena/envoy-gateway-controller/internal/webserver/handler"
 	"github.com/go-logr/logr"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+
+	egv1a1 "github.com/envoyproxy/gateway/api/v1alpha1"
 )
 
 type User struct {
@@ -51,6 +55,28 @@ func GetRouters(webLog logr.Logger) *http.ServeMux {
 	fileStore := datastore.NewFileStore(webLog.WithName("FileStore"))
 	btpHandler := handler.NewCreateClientBTPHandler(&webLog, fileStore)
 	mux.Handle("POST /btp/create", btpHandler)
+
+	// create post request to create event to trigger reconcile loop
+	mux.HandleFunc("POST /btp/refresh", func(w http.ResponseWriter, r *http.Request) {
+		webLog.Info("Received POST request to refresh BTPs", "time", time.Now())
+		
+		var refresh bool
+		err := json.NewDecoder(r.Body).Decode(&refresh)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			webLog.Error(err, "Failed to decode request body")
+			return
+		}
+		webLog.Info("Refresh", "refresh", refresh)
+
+		// send refresh event in the btpUpdate channel
+		btpevent.BTPUpdateChannel <- event.TypedGenericEvent[egv1a1.BackendTrafficPolicy]{
+			Object: egv1a1.BackendTrafficPolicy{},
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Event triggred to refreshed BTPs"))
+	})
 
 	return mux
 }
