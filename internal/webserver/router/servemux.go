@@ -11,6 +11,8 @@ import (
 	"github.com/durgeshmeena/envoy-gateway-controller/internal/webserver/handler"
 	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/event"
+
+	egv1a1 "github.com/envoyproxy/gateway/api/v1alpha1"
 )
 
 type User struct {
@@ -68,8 +70,8 @@ func GetRouters(webLog logr.Logger) *http.ServeMux {
 		webLog.Info("Refresh", "refresh", refresh)
 
 		// send refresh event in the btpUpdate channel
-		btpevent.BTPUpdateChannel <- event.GenericEvent{
-			Object: nil,
+		btpevent.BTPUpdateChannel <- event.TypedGenericEvent[egv1a1.BackendTrafficPolicy]{
+			Object: egv1a1.BackendTrafficPolicy{},
 		}
 
 		w.WriteHeader(http.StatusOK)
