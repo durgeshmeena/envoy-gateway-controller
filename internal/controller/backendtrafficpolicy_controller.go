@@ -59,6 +59,24 @@ func (r *BackendTrafficPolicyReconciler) Reconcile(ctx context.Context, req ctrl
 	// TODO(user): your logic
 	log.Info("Reconciling BackendTrafficPolicy")
 
+	// verify if NamespacedName is empty or not
+	if req.NamespacedName == (types.NamespacedName{}) {
+		// Handle the case when  there is no BackendTrafficPolicy instance to reconcile,
+		// this event is triggered by the channel source - post request to manually trigger reconcile loop
+		// to create or refresh BTP instances
+		log.Info("NamespacedName is empty, maybe reconcile loop triggered manually using event from webserver")
+		log.Info("Refreshing/Creating BTP instances")
+
+		err := r.refreshOrCreateBackendTrafficPolicies(ctx)
+		if err != nil {
+			log.Error(err, "Failed to refresh or create BackendTrafficPolicies")
+			return ctrl.Result{}, err
+		}
+
+		// return empty result
+		return ctrl.Result{}, nil
+	}
+
 	// read BTP instance from btps.json file and, fetch each corresponding instance from controller-runtime
 
 	// get dataStoreFilePath
@@ -76,7 +94,7 @@ func (r *BackendTrafficPolicyReconciler) Reconcile(ctx context.Context, req ctrl
 		return ctrl.Result{}, err
 	}
 
-	log.Info("BTPs from file", "BTPs", btps)
+	log.Info("BTPs from file", "BTPs", len(btps))
 	// fetch each BTP instance from controller-runtime
 	for _, btp := range btps {
 		name := btp.Metadata.Name
@@ -88,7 +106,7 @@ func (r *BackendTrafficPolicyReconciler) Reconcile(ctx context.Context, req ctrl
 		// expectedBackendTrafficPolicy := r.defineBackendTrafficPolicy(&btp)
 		if err := r.Get(ctx, client.ObjectKey{Name: name, Namespace: namespace}, btpInstance); err != nil {
 			if kerrors.IsNotFound(err) {
-				log.Info("BTP instance not found", "BTP", btp)
+				log.Info("BTP instance not found", "BTP", btp.Metadata.Name)
 
 				// set the owner reference
 				// ownerRef := metav1.NewControllerRef(expectedBackendTrafficPolicy, egv1a1.SchemeGroupVersion.WithKind(egv1a1.KindBackendTrafficPolicy))
@@ -179,6 +197,13 @@ func (r *BackendTrafficPolicyReconciler) Reconcile(ctx context.Context, req ctrl
 	}
 
 	return ctrl.Result{}, nil
+}
+
+// refreshOrCreateBackendTrafficPolicies refreshes or creates the BackendTrafficPolicy instances
+func (r *BackendTrafficPolicyReconciler) refreshOrCreateBackendTrafficPolicies(ctx context.Context) error {
+	// TODO: implement the logic to refresh or create the BackendTrafficPolicy instances
+
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
