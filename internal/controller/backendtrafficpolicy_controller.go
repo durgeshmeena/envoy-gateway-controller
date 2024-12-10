@@ -90,23 +90,23 @@ func (r *BackendTrafficPolicyReconciler) Reconcile(ctx context.Context, req ctrl
 				// btpInstance.SetOwnerReferences([]metav1.OwnerReference{*ownerRef})
 
 				// set controller reference
-				if err := ctrl.SetControllerReference(expectedBackendTrafficPolicy, btpInstance, r.Scheme); err != nil {
-					log.Error(err, "Failed to set controller reference")
+				// if err := ctrl.SetControllerReference(expectedBackendTrafficPolicy, btpInstance, r.Scheme); err != nil {
+				// 	log.Error(err, "Failed to set controller reference")
 
-					// update the status of the BTP instance
-					// btp.Status = gwapiv1a2.PolicyStatus{
-					// 	State:  gwapiv1a2.Rejected,
-					// 	Reason: "Failed to set controller reference",
-					// }
+				// 	// update the status of the BTP instance
+				// 	// btp.Status = gwapiv1a2.PolicyStatus{
+				// 	// 	State:  gwapiv1a2.Rejected,
+				// 	// 	Reason: "Failed to set controller reference",
+				// 	// }
 
-					if err := r.Status().Update(ctx, expectedBackendTrafficPolicy); err != nil {
-						log.Error(err, "Failed to update BTP status")
-						return ctrl.Result{}, err
-					}
+				// 	if err := r.Status().Update(ctx, expectedBackendTrafficPolicy); err != nil {
+				// 		log.Error(err, "Failed to update BTP status")
+				// 		return ctrl.Result{}, err
+				// 	}
 
-					return ctrl.Result{}, err
+				// 	return ctrl.Result{}, err
 
-				}
+				// }
 
 				// create BTP instance
 				log.Info("Creating new BTP instance",
