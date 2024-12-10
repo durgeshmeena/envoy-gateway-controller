@@ -23,8 +23,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
+	"github.com/durgeshmeena/envoy-gateway-controller/internal/pkg/kubernetes/btpevent"
 	"github.com/durgeshmeena/envoy-gateway-controller/internal/pkg/utils/datastore"
 	egv1a1 "github.com/envoyproxy/gateway/api/v1alpha1"
 )
@@ -178,9 +181,15 @@ func (r *BackendTrafficPolicyReconciler) Reconcile(ctx context.Context, req ctrl
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *BackendTrafficPolicyReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		// Uncomment the following line adding a pointer to an instance of the controlled resource as an argument
-		// For().
-		For(&egv1a1.BackendTrafficPolicy{}).
-		Complete(r)
+    // Create a channel source using the BTPUpdateChannel
+    chanSource := source.Channel(
+        btpevent.BTPUpdateChannel,
+        &handler.EnqueueRequestForObject{},
+    )
+
+    return ctrl.NewControllerManagedBy(mgr).
+        For(&egv1a1.BackendTrafficPolicy{}).
+        // Watch the channel source directly without taking its address
+        Watches(chanSource, &handler.EnqueueRequestForObject{}).
+        Complete(r)
 }
