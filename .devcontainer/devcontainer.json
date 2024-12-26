@@ -1,0 +1,5 @@
+{
+    "name": "Ubuntu Devops",
+    "image": "ghcr.io/durgeshmeena/ubuntu:devel_devops",
+    "privileged": true,
+}
